@@ -1,58 +1,70 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
-import type { InsertEmployee } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import type { Employee, LeaveRequest, InsertEmployee, InsertLeaveRequest } from "@shared/schema";
 import { z } from "zod";
 
 // Fetch employee by ID
 export function useEmployee(employeeId: string | null) {
-  return useQuery({
+  return useQuery<Employee>({
     queryKey: [api.employees.getByEmployeeId.path, employeeId],
     queryFn: async () => {
-      if (!employeeId) return null;
-      
-      const url = buildUrl(api.employees.getByEmployeeId.path, { employeeId });
-      const res = await fetch(url, { credentials: "include" });
-      
-      if (res.status === 404) {
-        throw new Error("لم يتم العثور على الموظف"); // Employee not found in Arabic
-      }
-      
+      if (!employeeId) throw new Error("ID required");
+      const res = await fetch(buildUrl(api.employees.getByEmployeeId.path, { employeeId }));
       if (!res.ok) {
-        throw new Error("حدث خطأ أثناء البحث"); // Generic error
+        if (res.status === 404) throw new Error("الموظف غير موجود");
+        throw new Error("حدث خطأ في الاتصال بالخادم");
       }
-      
-      return api.employees.getByEmployeeId.responses[200].parse(await res.json());
+      const data = await res.json();
+      return api.employees.getByEmployeeId.responses[200].parse(data);
     },
-    enabled: !!employeeId, // Only run if ID is provided
-    retry: false,
+    enabled: !!employeeId,
   });
 }
 
 // Create new employee (for Admin/Testing)
 export function useCreateEmployee() {
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: async (data: InsertEmployee) => {
-      const validated = api.employees.create.input.parse(data);
-      const res = await fetch(api.employees.create.path, {
-        method: api.employees.create.method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validated),
-        credentials: "include",
-      });
-      
-      if (!res.ok) {
-        throw new Error("فشل إنشاء الموظف");
-      }
-      
-      return api.employees.create.responses[201].parse(await res.json());
+      const res = await apiRequest("POST", api.employees.create.path, data);
+      const json = await res.json();
+      return api.employees.create.responses[201].parse(json);
     },
     onSuccess: (data) => {
-      // Invalidate query for this specific employee if they were just created
-      queryClient.invalidateQueries({ 
-        queryKey: [api.employees.getByEmployeeId.path, data.employeeId] 
-      });
+      queryClient.invalidateQueries({ queryKey: [api.employees.getByEmployeeId.path, data.employeeId] });
+    },
+  });
+}
+
+// Fetch leave requests for an employee
+export function useLeaveRequests(employeeId: string | null) {
+  return useQuery<LeaveRequest[]>({
+    queryKey: [api.leaveRequests.list.path, employeeId],
+    queryFn: async () => {
+      if (!employeeId) return [];
+      const url = buildUrl(api.leaveRequests.list.path, { employeeId });
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("فشل في استرجاع سجل الطلبات");
+      const data = await res.json();
+      return z.array(api.leaveRequests.create.responses[201]).parse(data);
+    },
+    enabled: !!employeeId,
+  });
+}
+
+// Create new leave request
+export function useCreateLeaveRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: InsertLeaveRequest) => {
+      const res = await apiRequest("POST", api.leaveRequests.create.path, data);
+      const json = await res.json();
+      return api.leaveRequests.create.responses[201].parse(json);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [api.leaveRequests.list.path, data.employeeId] });
+      queryClient.invalidateQueries({ queryKey: [api.employees.getByEmployeeId.path, data.employeeId] });
     },
   });
 }
