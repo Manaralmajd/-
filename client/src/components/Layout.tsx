@@ -21,13 +21,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
           
+          {/* Admin link hidden from regular view - accessible via /admin */}
           <nav>
+            {/* 
             <Link href="/admin">
               <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors">
                 <UserPlus className="w-4 h-4" />
                 <span>إدارة الموظفين</span>
               </button>
             </Link>
+            */}
           </nav>
         </div>
       </header>
