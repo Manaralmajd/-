@@ -90,42 +90,6 @@ export default function Home() {
                 ) : employee ? (
                   <div className="space-y-8 w-full">
                     <StatsCard employee={employee} />
-                    
-                    {requests && requests.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100"
-                      >
-                        <div className="flex items-center gap-2 mb-6 text-primary">
-                          <History className="w-6 h-6" />
-                          <h3 className="text-xl font-bold">سجل الطلبات السابقة</h3>
-                        </div>
-                        <div className="space-y-4">
-                          {requests.map((req) => (
-                            <div key={req.id} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <CalendarDays className="w-4 h-4" />
-                                  <span>{format(new Date(req.startDate), 'dd MMMM yyyy', { locale: ar })}</span>
-                                  <span> - </span>
-                                  <span>{format(new Date(req.endDate), 'dd MMMM yyyy', { locale: ar })}</span>
-                                </div>
-                                <p className="font-medium">{req.reason || "بدون سبب"}</p>
-                              </div>
-                              <div className={`px-4 py-1 rounded-full text-xs font-bold ${
-                                req.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                req.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                {req.status === 'approved' ? 'تمت الموافقة' :
-                                 req.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار'}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
                   </div>
                 ) : null}
               </AnimatePresence>
