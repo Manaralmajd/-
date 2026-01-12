@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 export interface IStorage {
   getEmployeeByEmployeeId(employeeId: string): Promise<Employee | undefined>;
   createEmployee(employee: InsertEmployee): Promise<Employee>;
-  updateEmployeeBalance(employeeId: string, balance: number): Promise<Employee>;
+  updateEmployee(employeeId: string, updates: Partial<InsertEmployee>): Promise<Employee>;
   createLeaveRequest(request: InsertLeaveRequest): Promise<LeaveRequest>;
   getLeaveRequestsByEmployeeId(employeeId: string): Promise<LeaveRequest[]>;
 }
@@ -21,9 +21,9 @@ export class DatabaseStorage implements IStorage {
     return employee;
   }
 
-  async updateEmployeeBalance(employeeId: string, balance: number): Promise<Employee> {
+  async updateEmployee(employeeId: string, updates: Partial<InsertEmployee>): Promise<Employee> {
     const [employee] = await db.update(employees)
-      .set({ annualLeaveBalance: balance })
+      .set(updates)
       .where(eq(employees.employeeId, employeeId))
       .returning();
     return employee;

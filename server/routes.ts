@@ -61,7 +61,7 @@ export async function registerRoutes(
 
   // Seed data from "الرصيد العام" sheet
   try {
-    const seedData = {
+    const seedData: Record<string, { name: string, balance: number }> = {
       "1000228468": { "name": "وفاء العبودي", "balance": 23 },
       "1011545249": { "name": "أمل السويد", "balance": 22 },
       "1044163085": { "name": "علي الدخيل", "balance": 29 },
@@ -101,9 +101,9 @@ export async function registerRoutes(
           name: info.name,
           annualLeaveBalance: info.balance
         });
-      } else if (existing.annualLeaveBalance !== info.balance) {
-        // Update balance if it changed in excel
-        await storage.updateEmployeeBalance(id, info.balance);
+      } else {
+        // Update both name and balance to match Excel exactly
+        await storage.updateEmployee(id, { name: info.name, annualLeaveBalance: info.balance });
       }
     }
   } catch (error) {
